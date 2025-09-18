@@ -33,7 +33,7 @@ A collection of example applications and starter templates for building ikas Adm
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/ikas-app-examples.git
+   git clone https://github.com/ikascom/ikas-app-examples.git
    cd ikas-app-examples
    ```
 
@@ -132,7 +132,7 @@ docs(readme): update installation guide
 
 ## 📚 Additional Resources
 
-- **[ikas Developer Documentation](https://developers.ikas.com)**
+- **[ikas Developer Documentation](https://builders.ikas.com)**
 - **[ikas Admin GraphQL API](https://api.myikas.com/api/v2/admin/graphql)**
 - **[Next.js Documentation](https://nextjs.org/docs)**
 - **[Prisma Documentation](https://www.prisma.io/docs)**
@@ -145,9 +145,9 @@ MIT
 
 ## 🐛 Issues & Support
 
-- **Bug Reports**: [GitHub Issues](https://github.com/your-org/ikas-app-examples/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/your-org/ikas-app-examples/discussions)
-- **Questions**: [ikas Developer Community](https://developers.ikas.com/community)
+- **Bug Reports**: [GitHub Issues](https://github.com/ikascom/ikas-app-examples/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/ikascom/ikas-app-examples/discussions)
+- **Questions**: [ikas Developer Community](https://join.slack.com/t/ikasbuilders/shared_invite/zt-3a64uh6zo-taCr2wiZC5WlvKfdDt3SvQ)
 
 ---
 
