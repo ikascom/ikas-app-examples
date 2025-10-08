@@ -29,7 +29,7 @@ const HomePage: React.FC<HomePageProps> = ({ token, storeName }) => {
           <CheckCircle2 className="mx-auto text-green-600" size={56} />
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">Congratulations!</h2>
           <p className="mt-2 text-muted-foreground">
-            You are authenticated to <span className="font-medium">{storeName}</span><p>Now you can go to order or product detail / list pages to see your app action.</p>
+            You are authenticated to <span className="font-medium">{storeName}</span><p>You can now go to the order list or detail page to see your app in action.</p>
           </p>
         </div>
       </div>
