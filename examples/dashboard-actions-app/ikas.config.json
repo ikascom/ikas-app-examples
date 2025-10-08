@@ -1,0 +1,33 @@
+{
+  "portMapping": {
+    "default": 3000
+  },
+  "oauthRedirectPath": "/api/oauth/callback/ikas",
+  "runCommand": "pnpm run dev",
+  "actions": [
+    {
+      "name": "View Order Details (IFRAME)",
+      "method": "iframe",
+      "actionUrl": "http://localhost:3000/ikas/actions/order-detail",
+      "type": "order-detail"
+    },
+    {
+      "name": "View Order Details (API)",
+      "method": "api",
+      "actionUrl": "http://localhost:3000/api/ikas/actions/order-detail",
+      "type": "order-detail"
+    },
+    {
+      "name": "View Order List (IFRAME)",
+      "method": "iframe",
+      "actionUrl": "http://localhost:3000/ikas/actions/order-list",
+      "type": "order-list"
+    },
+    {
+      "name": "View Order List (API)",
+      "method": "api",
+      "actionUrl": "http://localhost:3000/api/ikas/actions/order-list",
+      "type": "order-list"
+    }
+  ]
+}

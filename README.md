@@ -21,6 +21,32 @@ A collection of example applications and starter templates for building ikas Adm
 
 **[Get Started →](./examples/starter-app/README.md)**
 
+---
+
+### [Dashboard Actions App](./examples/dashboard-actions-app/) - App Actions Implementation
+
+**Complete implementation of ikas App Actions with API and IFRAME methods**
+
+**Features:**
+- 🎯 **App Actions** - Both API (server-to-server) and IFRAME (embedded UI) implementations
+- 📦 **Order Management** - Single and bulk order actions with comprehensive details
+- 🔐 **Dual Authentication** - HMAC-SHA256 signature validation (API) and JWT (IFRAME)
+- 🌍 **Internationalization** - Multi-language support (EN/TR) with centralized i18n
+- 📊 **Rich UI Components** - Responsive card-based layouts for order visualization
+- 🔄 **Parallel Processing** - Efficient bulk order fetching with graceful failure handling
+- 📝 **Comprehensive Docs** - Complete guides, API references, and troubleshooting
+
+**Perfect for:** Building contextual actions within ikas Admin (order details, product lists, etc.) with custom business logic.
+
+**Key Implementations:**
+- ✅ Order Detail Action (single order)
+- ✅ Order List Action (multiple orders)
+- ✅ Signature validation for API actions
+- ✅ App Bridge integration for IFRAME actions
+- ✅ Audit logging and error handling
+
+**[Get Started →](./examples/dashboard-actions-app/README.md)** | **[App Actions Guide →](./examples/dashboard-actions-app/APP_ACTIONS_GUIDE.md)**
+
 ## 🛠️ Quick Start
 
 ### Prerequisites
@@ -51,11 +77,15 @@ A collection of example applications and starter templates for building ikas Adm
 These examples cover essential patterns for ikas app development:
 
 - **Authentication & OAuth** - Secure user authorization flows
+- **App Actions** - Contextual actions within ikas Admin (API and IFRAME methods)
 - **GraphQL Integration** - Type-safe API interactions with code generation
 - **Token Management** - Secure storage and refresh patterns
 - **Session Handling** - Server-side session management
+- **Signature Validation** - HMAC-SHA256 webhook security for API actions
+- **App Bridge Integration** - Embedded iframe pages with secure token exchange
 - **UI Components** - Modern, accessible interfaces with Tailwind + shadcn/ui
 - **Database Integration** - Local development with Prisma
+- **Internationalization** - Multi-language support with centralized translation management
 - **Security Best Practices** - Token security, session management, and API protection
 
 ## 🏗️ Architecture Overview
