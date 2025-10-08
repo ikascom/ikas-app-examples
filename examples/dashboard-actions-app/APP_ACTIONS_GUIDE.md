@@ -61,7 +61,6 @@ ikas Admin → POST request with signature → Your API Endpoint → Process →
   "success": true,
   "message": "Operation completed successfully",
   "actionRunId": "uuid",
-  "data": { /* optional additional data */ }
 }
 ```
 
