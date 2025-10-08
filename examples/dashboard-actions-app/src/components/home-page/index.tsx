@@ -16,7 +16,7 @@ const HomePage: React.FC<HomePageProps> = ({ token, storeName }) => {
       <div className="max-w-[1200px] mx-auto p-6 bg-background min-h-[100vh]">
         <div className="text-center p-20 bg-muted rounded-xl border border-dashed">
           <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
-          <p className="text-muted-foreground">Please authenticate to manage webhooks.</p>
+          <p className="text-muted-foreground">Please authenticate to use app actions.</p>
         </div>
       </div>
     );
@@ -29,7 +29,7 @@ const HomePage: React.FC<HomePageProps> = ({ token, storeName }) => {
           <CheckCircle2 className="mx-auto text-green-600" size={56} />
           <h2 className="mt-4 text-2xl font-semibold tracking-tight">Congratulations!</h2>
           <p className="mt-2 text-muted-foreground">
-            You are authenticated to <span className="font-medium">{storeName}</span>
+            You are authenticated to <span className="font-medium">{storeName}</span><p>Now you can go to order or product detail / list pages to see your app action.</p>
           </p>
         </div>
       </div>
