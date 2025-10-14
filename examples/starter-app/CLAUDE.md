@@ -1,6 +1,5 @@
----
-alwaysApply: true
----
+
+
 <!-- Source: AGENTS.md -->
 
 # Project Rules for Ikas App Starter App (Next.js)

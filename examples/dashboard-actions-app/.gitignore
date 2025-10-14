@@ -66,14 +66,12 @@ prisma/*.db
 .junie
 .kilocode
 .kiro
-.mcp.json
 .openhands
 .qwen
 .roo
 .vscode
 .windsurf
 .zed
-CLAUDE.md
 CRUSH.md
 WARP.md
 config.toml
