@@ -1,5 +1,6 @@
 import { AppBridgeHelper } from '@ikas/app-helpers';
 import { useRouter } from 'next/navigation';
+import crypto from 'crypto';
 
 /** Key used for storing tokens in session storage */
 const TOKEN_KEY = 'token';
@@ -124,5 +125,29 @@ export class TokenHelpers {
     
     // Missing required parameters - redirect to authorization page
     await router.push('/authorize-store');
+  };
+
+  /**
+   * Validates a code signature using HMAC-SHA256.
+   *
+   * This method is used to verify the authenticity of OAuth authorization codes
+   * by comparing a received signature with an expected signature computed using
+   * the client secret. This provides an additional layer of security to ensure
+   * the code has not been tampered with.
+   *
+   * @param {string} code - The authorization code to validate
+   * @param {string} receivedSignature - The signature received with the code
+   * @param {string} secret - The client secret used to generate the expected signature
+   *
+   * @returns {boolean} True if the signatures match, false otherwise
+   *
+   * @remarks
+   * - Uses HMAC-SHA256 algorithm for signature generation
+   * - Compares signatures using strict equality
+   * - Should be called before exchanging authorization code for tokens
+   */
+  static validateCodeSignature = (code: string, receivedSignature: string, secret: string): boolean => {
+    const expectedSignature = crypto.createHmac('sha256', secret).update(code, 'utf8').digest('hex');
+    return expectedSignature === receivedSignature;
   };
 }

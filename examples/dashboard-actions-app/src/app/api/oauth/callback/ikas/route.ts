@@ -5,6 +5,7 @@ import { OAuthAPI } from '@ikas/admin-api-client';
 import moment from 'moment';
 import { getIkas, getRedirectUri } from '@/helpers/api-helpers';
 import { JwtHelpers } from '@/helpers/jwt-helpers';
+import { TokenHelpers } from '@/helpers/token-helpers';
 import { AuthToken } from '@/models/auth-token';
 import { AuthTokenManager } from '@/models/auth-token/manager';
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,11 +14,13 @@ import z from 'zod';
 const callbackSchema = z.object({
   code: z.string().min(1, 'Authorization code is required'),
   state: z.string().optional(),
+  signature: z.string().min(1, 'Signature is required'),
 });
 
 /**
  * Handles the OAuth callback for Ikas.
- * Exchanges the authorization code for tokens, validates state, updates session, and redirects.
+ * Validates code signature, optionally validates state for CSRF protection,
+ * exchanges the authorization code for tokens, updates session, and redirects.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -25,10 +28,11 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url as string, `http://${request.headers.get('host')}`);
     const { searchParams } = url;
 
-    // Validate the incoming request parameters (code, state)
+    // Validate the incoming request parameters (code, state, signature)
     const validation = validateRequest(callbackSchema, {
       code: searchParams.get('code'),
       state: searchParams.get('state'),
+      signature: searchParams.get('signature'),
     });
 
     if (!validation.success) {
@@ -36,11 +40,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { code, state } = validation.data;
+    const { code, state, signature } = validation.data;
 
-    // Retrieve session and check state for CSRF protection
+    // Validate code signature
+    if (!TokenHelpers.validateCodeSignature(code, signature, config.oauth.clientSecret!)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
+
+    // Retrieve session and optionally check state for CSRF protection
     const session = await getSession();
-    if (session.state !== state) {
+    if (state && session.state && session.state !== state) {
       return NextResponse.json({ error: 'Invalid state parameter' }, { status: 400 });
     }
 

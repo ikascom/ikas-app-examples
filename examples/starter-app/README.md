@@ -40,7 +40,7 @@ src/
 ├─ helpers/
 │  ├─ api-helpers.ts                     # getIkas(), onCheckToken(), getRedirectUri()
 │  ├─ jwt-helpers.ts                     # JWT create/verify
-│  └─ token-helpers.ts                   # Browser token utilities (AppBridge)
+│  └─ token-helpers.ts                   # Token utilities (AppBridge, signature validation)
 │
 ├─ lib/
 │  ├─ api-requests.ts                    # Frontend → backend bridge (axios)
@@ -131,8 +131,14 @@ Port and redirect path are also defined in `ikas.config.json`:
   - Else route to `/authorize-store` where user enters store name.
 
 - `GET /api/oauth/authorize/ikas` validates `storeName`, sets `state` in session, and redirects to ikas authorize URL.
-- `GET /api/oauth/callback/ikas` exchanges `code` for tokens, fetches `getMerchant` and `getAuthorizedApp`, upserts token via `AuthTokenManager`, sets session, builds a short-lived JWT via `JwtHelpers.createToken`, and redirects to `/callback?...`.
+- `GET /api/oauth/callback/ikas` validates the `signature` parameter using HMAC-SHA256 (via `TokenHelpers.validateCodeSignature`), optionally validates `state` for CSRF protection, exchanges `code` for tokens, fetches `getMerchant` and `getAuthorizedApp`, upserts token via `AuthTokenManager`, sets session, builds a short-lived JWT via `JwtHelpers.createToken`, and redirects to `/callback?...`.
 - `/callback` (client) reads `token`, `redirectUrl`, `authorizedAppId`, stores token in `sessionStorage`, then redirects back to Admin.
+
+### OAuth Callback Security
+The OAuth callback endpoint requires a `signature` query parameter to validate the authorization code:
+- **Signature Generation**: `HMAC-SHA256(code, clientSecret)` in hex format
+- **Validation**: `TokenHelpers.validateCodeSignature(code, signature, clientSecret)`
+- **State Parameter**: Optional but recommended for additional CSRF protection
 
 ## 🔑 Auth and API Calls
 
@@ -189,6 +195,7 @@ pnpm prisma:studio
 - Never log secrets or tokens. Do not expose access/refresh tokens to the client.
 - Use the short-lived JWT for browser → server auth; server uses stored OAuth tokens.
 - `onCheckToken` auto-refreshes tokens server-side.
+- OAuth callback uses HMAC-SHA256 signature validation to verify authorization code authenticity before token exchange.
 
 ## 📝 License
 

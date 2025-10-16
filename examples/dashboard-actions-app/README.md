@@ -144,6 +144,12 @@ Port and redirect path are also defined in `ikas.config.json`:
 - `GET /api/oauth/callback/ikas` exchanges `code` for tokens, fetches `getMerchant` and `getAuthorizedApp`, upserts token via `AuthTokenManager`, sets session, builds a short-lived JWT via `JwtHelpers.createToken`, and redirects to `/callback?...`.
 - `/callback` (client) reads `token`, `redirectUrl`, `authorizedAppId`, stores token in `sessionStorage`, then redirects back to Admin.
 
+### OAuth Callback Security
+The OAuth callback endpoint requires a `signature` query parameter to validate the authorization code:
+- **Signature Generation**: `HMAC-SHA256(code, clientSecret)` in hex format
+- **Validation**: `TokenHelpers.validateCodeSignature(code, signature, clientSecret)`
+- **State Parameter**: Optional but recommended for additional CSRF protection
+
 ## 🎯 App Actions
 
 This starter includes two types of **ikas App Actions** for order management:
@@ -336,6 +342,7 @@ pnpm prisma:studio
 - Never log secrets or tokens. Do not expose access/refresh tokens to the client.
 - Use the short-lived JWT for browser → server auth; server uses stored OAuth tokens.
 - `onCheckToken` auto-refreshes tokens server-side.
+- OAuth callback uses HMAC-SHA256 signature validation to verify authorization code authenticity before token exchange.
 
 ## 📝 License
 
