@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
     // Validate the incoming request parameters (code, state, signature)
     const validation = validateRequest(callbackSchema, {
       code: searchParams.get('code'),
-      state: searchParams.get('state'),
-      signature: searchParams.get('signature'),
+      state: searchParams.get('state') || undefined,
+      signature: searchParams.get('signature') || undefined,
     });
 
     if (!validation.success) {
