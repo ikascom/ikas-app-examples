@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { Suspense, useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
@@ -12,23 +13,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
  * - Renders a form for the user to enter their store name and authorize the app.
  * - Handles error display if redirected back with a failure status.
  */
-const AuthorizeStorePage: React.FC = () => {
+function AuthorizeStoreForm() {
+  const searchParams = useSearchParams();
   // State for the store name input
-  const [storeName, setStoreName] = useState("");
+  const [storeName, setStoreName] = useState(searchParams.get("storeName") ?? "");
   // State to control error message visibility
-  const [showError, setShowError] = useState(false);
-
-  // Parse query params on mount to prefill storeName and show error if needed
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("status") === "fail") {
-      setShowError(true);
-    }
-    const store = params.get("storeName");
-    if (store) {
-      setStoreName(store);
-    }
-  }, []);
+  const [showError, setShowError] = useState(searchParams.get("status") === "fail");
 
   // Handler for input change
   const handleInputChange = useCallback(
@@ -40,38 +30,36 @@ const AuthorizeStorePage: React.FC = () => {
   );
 
   return (
-    <main className="min-h-[100vh] flex flex-col items-center justify-center p-6">
+    <main className="flex min-h-svh flex-col items-center justify-center bg-background p-6">
       <div className="flex w-full max-w-md flex-col items-center gap-8">
-        <div className="flex items-center justify-center">
-          <Image src="/logo.svg" alt="ikas Logo" width={192} height={48} priority className="h-auto w-[12rem] object-contain" />
-        </div>
+        <Image src="/logo.svg" alt="ikas" width={192} height={48} priority className="h-auto w-48 object-contain" />
         <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Connect your ikas store</CardTitle>
-            <CardDescription>Enter your store name to authorize this app.</CardDescription>
-          </CardHeader>
-          <form method="GET" action="/api/oauth/authorize/ikas" autoComplete="off">
-            <CardContent className="space-y-2">
-              <Label htmlFor="storeName">Store name</Label>
-              <Input
-                id="storeName"
-                name="storeName"
-                value={storeName}
-                onChange={handleInputChange}
-                required
-                autoFocus
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="none"
-                aria-invalid={showError || undefined}
-              />
-              {showError && (
-                <p className="text-sm text-destructive">An error occurred. Please try again.</p>
-              )}
+          <form method="GET" action="/api/oauth/authorize/ikas" autoComplete="off" className="flex flex-col gap-(--card-spacing)">
+            <CardHeader>
+              <CardTitle>ikas mağazanızı bağlayın</CardTitle>
+              <CardDescription>Uygulamayı yetkilendirmek için mağaza adınızı girin.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Field data-invalid={showError || undefined}>
+                <FieldLabel htmlFor="storeName">Mağaza adı</FieldLabel>
+                <Input
+                  id="storeName"
+                  name="storeName"
+                  value={storeName}
+                  onChange={handleInputChange}
+                  required
+                  autoFocus
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  aria-invalid={showError || undefined}
+                />
+                {showError && <FieldError>Mağaza bağlanamadı. Mağaza adını kontrol edip tekrar deneyin.</FieldError>}
+              </Field>
             </CardContent>
             <CardFooter>
               <Button type="submit" disabled={!storeName.trim()} className="w-full">
-                Add to My Store
+                Mağazama ekle
               </Button>
             </CardFooter>
           </form>
@@ -79,6 +67,12 @@ const AuthorizeStorePage: React.FC = () => {
       </div>
     </main>
   );
-};
+}
+
+const AuthorizeStorePage: React.FC = () => (
+  <Suspense>
+    <AuthorizeStoreForm />
+  </Suspense>
+);
 
 export default AuthorizeStorePage;

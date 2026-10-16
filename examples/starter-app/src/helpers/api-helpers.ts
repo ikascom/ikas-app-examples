@@ -1,5 +1,4 @@
 import { OAuthAPI } from '@ikas/admin-api-client';
-import moment from 'moment';
 import { AuthToken } from '../models/auth-token';
 import { AuthTokenManager } from '../models/auth-token/manager';
 import { ikasAdminGraphQLAPIClient } from '../lib/ikas-client/generated/graphql';
@@ -48,7 +47,7 @@ export async function onCheckToken(token?: AuthToken): Promise<{ accessToken: st
 
       if (response.data) {
         // Calculate new expiration date in ISO format.
-        const newExpireDate = moment().add(response.data.expires_in, 'seconds').toDate().toISOString();
+        const newExpireDate = new Date(Date.now() + response.data.expires_in * 1000).toISOString();
 
         // Update token fields with refreshed data.
         token.accessToken = response.data.access_token;

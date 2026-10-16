@@ -147,7 +147,7 @@ Port and redirect path are also defined in `ikas.config.json`:
 ### OAuth Callback Security
 The OAuth callback endpoint requires a `signature` query parameter to validate the authorization code:
 - **Signature Generation**: `HMAC-SHA256(code, clientSecret)` in hex format
-- **Validation**: `TokenHelpers.validateCodeSignature(code, signature, clientSecret)`
+- **Validation**: `validateCodeSignature(code, signature, clientSecret)` from `src/helpers/signature-helpers.ts` (server-only)
 - **State Parameter**: Optional but recommended for additional CSRF protection
 
 ## 🎯 App Actions

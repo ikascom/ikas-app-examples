@@ -1,9 +1,11 @@
 import React from 'react';
+import { Spinner } from '@/components/ui/spinner';
 
 function Loading() {
   return (
-    <div className="relative w-full h-[100svh] box-border flex items-center justify-center text-2xl font-medium">
-      <div>Please wait...</div>
+    <div className="flex h-svh w-full items-center justify-center gap-2 text-sm text-muted-foreground">
+      <Spinner />
+      <span>Yükleniyor</span>
     </div>
   );
 }

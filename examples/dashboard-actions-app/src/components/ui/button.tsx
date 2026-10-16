@@ -1,59 +1,132 @@
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { Spinner } from "@/components/ui/spinner"
+
+/**
+ * Each color points the local --c-* variables at one palette color. Variants
+ * only read --c-*, so any variant works with any color.
+ */
+const colors = {
+  neutral:
+    "[--c:var(--neutral)] [--c-fg:var(--neutral-foreground)] [--c-subtle:var(--neutral-subtle)] [--c-subtle-fg:var(--neutral-subtle-foreground)] [--c-text:var(--foreground)]",
+  blue: "[--c:var(--blue)] [--c-fg:var(--blue-foreground)] [--c-subtle:var(--blue-subtle)] [--c-subtle-fg:var(--blue-subtle-foreground)] [--c-text:var(--blue-subtle-foreground)]",
+  violet:
+    "[--c:var(--violet)] [--c-fg:var(--violet-foreground)] [--c-subtle:var(--violet-subtle)] [--c-subtle-fg:var(--violet-subtle-foreground)] [--c-text:var(--violet-subtle-foreground)]",
+  green:
+    "[--c:var(--green)] [--c-fg:var(--green-foreground)] [--c-subtle:var(--green-subtle)] [--c-subtle-fg:var(--green-subtle-foreground)] [--c-text:var(--green-subtle-foreground)]",
+  lime: "[--c:var(--lime)] [--c-fg:var(--lime-foreground)] [--c-subtle:var(--lime-subtle)] [--c-subtle-fg:var(--lime-subtle-foreground)] [--c-text:var(--lime-subtle-foreground)]",
+  amber:
+    "[--c:var(--amber)] [--c-fg:var(--amber-foreground)] [--c-subtle:var(--amber-subtle)] [--c-subtle-fg:var(--amber-subtle-foreground)] [--c-text:var(--amber-subtle-foreground)]",
+  red: "[--c:var(--red)] [--c-fg:var(--red-foreground)] [--c-subtle:var(--red-subtle)] [--c-subtle-fg:var(--red-subtle-foreground)] [--c-text:var(--red-subtle-foreground)]",
+} as const
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "group/button relative inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium whitespace-nowrap transition-[color,background-color,box-shadow,translate,scale] duration-150 ease-out outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none aria-busy:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        /** Filled, raised and softly glowing in its own color. The main action of a view. */
+        solid:
+          "bg-(--c) bg-linear-to-b from-white/14 to-transparent text-(--c-fg) shadow-solid hover:bg-[color-mix(in_oklab,var(--c),white_7%)] hover:shadow-solid-hover active:translate-y-px active:bg-none active:shadow-pressed",
+        /** Tinted fill, no elevation. Secondary actions that still carry color. */
+        soft: "bg-(--c-subtle) text-(--c-subtle-fg) hover:bg-[color-mix(in_oklab,var(--c-subtle),var(--c)_9%)] active:bg-[color-mix(in_oklab,var(--c-subtle),var(--c)_14%)] aria-expanded:bg-[color-mix(in_oklab,var(--c-subtle),var(--c)_9%)]",
+        /** White raised surface. Neutral actions next to a solid one: Cancel, Export, Edit. */
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+          "bg-card text-(--c-text) shadow-raised hover:bg-[color-mix(in_oklab,var(--card),var(--foreground)_3%)] hover:shadow-raised-hover active:translate-y-px active:shadow-inset aria-expanded:bg-muted",
+        /** No container. Toolbars, table rows and icon buttons. */
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "text-(--c-text) hover:bg-(--c-subtle) active:bg-[color-mix(in_oklab,var(--c-subtle),var(--c)_8%)] aria-expanded:bg-(--c-subtle)",
+        link: "h-auto! px-0! text-(--c-text) underline decoration-current/30 underline-offset-4 hover:decoration-current",
       },
+      /** Palette color. Works with every variant. Use red for destructive actions. */
+      color: colors,
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        xs: "h-7 gap-1 rounded-md px-2.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-8 gap-1.5 px-3 text-[13px] has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
+        default: "h-9 gap-2 px-3.5 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        lg: "h-10 gap-2 px-4 has-data-[icon=inline-end]:pr-3.5 has-data-[icon=inline-start]:pl-3.5",
+        "icon-xs": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-sm": "size-8",
         icon: "size-9",
+        "icon-lg": "size-10",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "solid",
+      color: "neutral",
       size: "default",
     },
   }
 )
 
+type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>["variant"]>
+type ButtonColor = keyof typeof colors
+
+/** shadcn/ui variant names, kept so blocks written for stock shadcn keep working. */
+const aliases = {
+  default: { variant: "solid" },
+  secondary: { variant: "soft" },
+  destructive: { variant: "solid", color: "red" },
+  "destructive-outline": { variant: "outline", color: "red" },
+} as const satisfies Record<string, { variant: ButtonVariant; color?: ButtonColor }>
+
+type ButtonProps = Omit<React.ComponentProps<"button">, "color"> &
+  Omit<VariantProps<typeof buttonVariants>, "variant"> & {
+    /** solid for the main action. shadcn names like destructive still work. */
+    variant?: ButtonVariant | keyof typeof aliases
+    asChild?: boolean
+    /** Shows a spinner, keeps the button width and blocks clicks. */
+    loading?: boolean
+  }
+
+function resolveVariant(variant: ButtonProps["variant"], color: ButtonProps["color"]) {
+  if (variant && variant in aliases) {
+    const alias: { variant: ButtonVariant; color?: ButtonColor } = aliases[variant as keyof typeof aliases]
+    return { variant: alias.variant, color: color ?? alias.color ?? "neutral" }
+  }
+  return { variant: (variant ?? "solid") as ButtonVariant, color: color ?? "neutral" }
+}
+
 function Button({
   className,
-  variant,
-  size,
+  variant: variantProp,
+  color: colorProp,
+  size = "default",
   asChild = false,
+  loading = false,
+  disabled,
+  children,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot : "button"
+}: ButtonProps) {
+  const Comp = asChild ? Slot.Root : "button"
+  const { variant, color } = resolveVariant(variantProp, colorProp)
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      data-variant={variant}
+      data-color={color}
+      data-size={size}
+      aria-busy={loading || undefined}
+      disabled={asChild ? undefined : disabled}
+      className={cn(buttonVariants({ variant, color, size, className }))}
       {...props}
-    />
+    >
+      {loading && !asChild ? (
+        <>
+          <span className="invisible contents">{children}</span>
+          <span className="absolute inset-0 flex items-center justify-center">
+            <Spinner />
+          </span>
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   )
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants, type ButtonProps, type ButtonColor, type ButtonVariant }

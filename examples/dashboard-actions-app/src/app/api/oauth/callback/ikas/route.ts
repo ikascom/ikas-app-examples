@@ -2,10 +2,9 @@ import { config } from '@/globals/config';
 import { getSession, setSession } from '@/lib/session';
 import { validateRequest } from '@/lib/validation';
 import { OAuthAPI } from '@ikas/admin-api-client';
-import moment from 'moment';
 import { getIkas, getRedirectUri } from '@/helpers/api-helpers';
 import { JwtHelpers } from '@/helpers/jwt-helpers';
-import { TokenHelpers } from '@/helpers/token-helpers';
+import { validateCodeSignature } from '@/helpers/signature-helpers';
 import { AuthToken } from '@/models/auth-token';
 import { AuthTokenManager } from '@/models/auth-token/manager';
 import { NextRequest, NextResponse } from 'next/server';
@@ -43,7 +42,7 @@ export async function GET(request: NextRequest) {
     const { code, state, signature } = validation.data;
 
     // Validate code signature
-    if (signature && !TokenHelpers.validateCodeSignature(code, signature, config.oauth.clientSecret!)) {
+    if (signature && !validateCodeSignature(code, signature, config.oauth.clientSecret!)) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
@@ -108,7 +107,7 @@ export async function GET(request: NextRequest) {
     // Extract necessary IDs and calculate token expiration date
     const authorizedAppId = authorizedAppResponse.data.getAuthorizedApp.id!;
     const merchantId = merchantResponse.data.getMerchant.id!;
-    const expireDate = moment().add(tokenResponse.data.expires_in, 'seconds').toDate().toISOString();
+    const expireDate = new Date(Date.now() + tokenResponse.data.expires_in * 1000).toISOString();
 
     // Build the final AuthToken object
     const token: AuthToken = {
@@ -124,7 +123,7 @@ export async function GET(request: NextRequest) {
     await AuthTokenManager.put(token);
 
     // Update session with new merchant and app IDs, clear state, and set expiration
-    session.expiresAt = new Date(Date.now() + 3600 * 1000);
+    session.expiresAt = Date.now() + 3600 * 1000;
     session.merchantId = merchantId;
     session.authorizedAppId = authorizedAppId;
     delete session.state;

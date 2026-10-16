@@ -48,6 +48,7 @@ Thumbs.db
 /data/
 
 /generated/prisma
+/src/generated/prisma
 prisma/*.db
 
 .ikas

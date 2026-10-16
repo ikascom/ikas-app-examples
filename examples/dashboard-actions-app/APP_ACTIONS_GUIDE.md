@@ -434,182 +434,110 @@ IFRAME actions display an embedded UI within the ikas Admin.
 
 #### 1. Create IFRAME Page
 
+See `src/app/ikas/actions/order-detail/page.tsx` and `order-list/page.tsx` for the full versions (RecordTable, DescriptionList, retry). Build the UI with the ikas App UI kit and follow `ikas-ui.md`.
+
 **File:** `src/app/ikas/actions/[action-name]/page.tsx`
 
 ```typescript
 'use client';
 
-import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppBridgeHelper } from '@ikas/app-helpers';
+import { Page, PageHeader } from '@/components/ikas/page';
+import { EmptyState } from '@/components/ikas/empty-state';
+import { DescriptionList } from '@/components/ikas/description-list';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import Loading from '@/components/Loading';
 import { TokenHelpers } from '@/helpers/token-helpers';
 import { ApiRequests } from '@/lib/api-requests';
-import { AppBridgeHelper } from '@ikas/app-helpers';
-import { t, SupportedLocale } from '@/lib/i18n';
-
-type OrderData = {
-  id: string;
-  orderNumber?: string;
-  orderedAt?: number;
-  status: string;
-  totalFinalPrice: number;
-  currencyCode: string;
-  customer?: {
-    fullName?: string;
-    email?: string;
-  };
-};
+import type { GetOrderApiResponse } from '@/app/api/ikas/get-order/route';
+import { t } from '@/lib/i18n';
 
 function OrderActionContent() {
   const searchParams = useSearchParams();
-  const [order, setOrder] = useState<OrderData | null>(null);
+  const idList = searchParams.get('idList');
+  const userLocale = searchParams.get('userLocale') || 'en';
+  const orderId = (idList ?? '').split(',')[0]?.trim() ?? '';
+
+  const [order, setOrder] = useState<GetOrderApiResponse['order'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get URL parameters
-  const actionRunId = searchParams.get('actionRunId');
-  const idList = searchParams.get('idList');
-  const userLocale = (searchParams.get('userLocale') || 'en') as SupportedLocale;
+  const translations = useMemo(
+    () => ({
+      title: t('page.order_detail.title', userLocale),
+      failed: t('page.order_detail.error.failed', userLocale),
+      noOrderId: t('page.order_detail.error.no_order_id', userLocale),
+      notFound: t('page.order_detail.error.not_found', userLocale),
+      status: t('page.order_detail.status', userLocale),
+    }),
+    [userLocale],
+  );
 
-  // Memoized translations
-  const translations = useMemo(() => ({
-    loading: t('page.loading', userLocale),
-    error: {
-      noOrderId: t('page.error.no_order_id', userLocale),
-      failedToLoad: t('page.error.failed_to_load', userLocale),
-      unableToAuth: t('page.error.unable_to_authenticate', userLocale),
-    },
-    title: t('page.title', userLocale),
-    orderNumber: t('page.order_number', userLocale),
-    orderDate: t('page.order_date', userLocale),
-    // ... more translations
-  }), [userLocale]);
+  // Derive input errors instead of storing them in state
+  const inputError = orderId ? null : translations.noOrderId;
 
-  // Fetch order data from backend API
-  const fetchOrderDetails = useCallback(async (
-    currentToken: string,
-    orderId: string
-  ) => {
-    try {
-      const res = await ApiRequests.ikas.getOrder(currentToken, orderId);
-      
-      if (res.status === 200 && res.data?.order) {
-        setOrder(res.data.order);
-      } else {
-        setError(translations.error.failedToLoad);
-      }
-    } catch (err) {
-      console.error('Error fetching order:', err);
-      setError(translations.error.failedToLoad);
-    } finally {
-      setLoading(false);
-    }
-  }, [translations]);
-
-  // Initialize page
-  const initializePage = useCallback(async () => {
-    // Parse order ID from idList
-    if (!idList) {
-      setError(translations.error.noOrderId);
-      setLoading(false);
-      return;
-    }
-
-    const orderId = idList.split(',')[0];
-    if (!orderId) {
-      setError(translations.error.noOrderId);
-      setLoading(false);
-      return;
-    }
-
-    // Get JWT token from app bridge
-    const fetchedToken = await TokenHelpers.getTokenForIframeApp();
-    if (fetchedToken) {
-      await fetchOrderDetails(fetchedToken, orderId);
-    } else {
-      setError(translations.error.unableToAuth);
-      setLoading(false);
-    }
-  }, [idList, fetchOrderDetails, translations]);
-
-  // Close platform loader on mount
+  // 1. Close the ikas platform loader
   useEffect(() => {
     AppBridgeHelper.closeLoader();
   }, []);
 
-  // Initialize on mount
+  // 2. Get the JWT from the app bridge, 3. call the backend.
+  // Set state only from promise callbacks (react-hooks/set-state-in-effect).
   useEffect(() => {
-    initializePage();
-  }, [initializePage]);
+    if (inputError) return;
+    let cancelled = false;
 
-  // Render loading state
-  if (loading) {
-    return <Loading message={translations.loading} />;
-  }
+    TokenHelpers.getTokenForIframeApp()
+      .then(async (token) => {
+        if (cancelled || !token) return;
+        const res = await ApiRequests.ikas.getOrder(token, orderId);
+        if (res.data?.data?.order) setOrder(res.data.data.order);
+        else setError(translations.notFound);
+      })
+      .catch(() => setError(translations.failed))
+      .finally(() => setLoading(false));
 
-  // Render error state
-  if (error || !order) {
+    return () => {
+      cancelled = true;
+    };
+  }, [inputError, orderId, translations]);
+
+  // 4. Render with ikas App UI: Page + PageHeader, EmptyState for errors, Skeleton while loading.
+  // No app logo or app name here: the ikas panel already shows them above the iframe.
+  if (inputError || error) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-red-600">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{error || translations.error.failedToLoad}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Page>
+        <EmptyState status="danger" title={translations.failed} description={inputError ?? error} />
+      </Page>
     );
   }
 
-  // Render order data
-  return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>{translations.title}</CardTitle>
-          <CardDescription>
-            {actionRunId && (
-              <span className="block text-xs font-mono mt-1">
-                Action Run ID: {actionRunId}
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="text-sm font-medium text-gray-500">
-              {translations.orderNumber}
-            </div>
-            <div className="text-lg font-semibold">
-              {order.orderNumber || order.id}
-            </div>
-          </div>
-          
-          <div>
-            <div className="text-sm font-medium text-gray-500">
-              {translations.orderDate}
-            </div>
-            <div className="text-lg">
-              {order.orderedAt 
-                ? new Date(order.orderedAt).toLocaleDateString(userLocale)
-                : 'N/A'
-              }
-            </div>
-          </div>
+  if (loading || !order) {
+    return (
+      <Page>
+        <Skeleton className="h-40" />
+      </Page>
+    );
+  }
 
-          {/* Add more fields as needed */}
+  return (
+    <Page>
+      <PageHeader title={`${translations.title} #${order.orderNumber}`} />
+      <Card>
+        <CardContent>
+          <DescriptionList items={[{ label: translations.status, value: order.status }]} />
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
 
 export default function OrderActionPage() {
   return (
-    <Suspense fallback={<Loading message="Loading..." />}>
+    <Suspense fallback={<Loading />}>
       <OrderActionContent />
     </Suspense>
   );
