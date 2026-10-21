@@ -1,118 +1,117 @@
-# ikas App UI kuralları
+# ikas App UI rules
 
-Bu kurallar bu ikas uygulamasının her ekranı için geçerlidir. Uygulama ikas panelinin içinde
-açılır; ekranları panelle aynı tip ölçeğini, yoğunluğu ve yüzeyleri kullanmalı, sıradan bir AI
-çıktısı gibi durmamalıdır. Arayüz kodu yazarken veya değiştirirken bu kurallara uy.
+These rules apply to every screen of this ikas app. The app opens inside the ikas admin panel;
+its screens must use the same type scale, density and surfaces as the panel and must not look
+like generic AI output. Follow these rules whenever you write or change UI code.
 
-## 1. Yapı taşlarını kullan, yeniden icat etme
+## 1. Use the building blocks, don't reinvent them
 
-| İhtiyaç | Kullan | Asla |
+| Need | Use | Never |
 | --- | --- | --- |
-| Ekran sarmalayıcı + başlık + aksiyonlar | `@/components/ikas/page` içinden `Page` + `PageHeader` | `<h1>` içeren özel bir `<div className="container">` |
-| Sütunlar | `Layout` / `LayoutColumn` (`columns="main-aside"`, `"half"`, `"third"`) | Her sayfada elle yazılmış `grid-cols-*` |
-| Ayar formları | `SettingsGroup` (`label`, `hint`, uzun sayfada `index`) + `Card` + `Field` | Ortalanmış tek kartta dev bir form |
-| Kayıt listesi | `RecordTable` | Tablo verisi için kart grid'i |
-| Gösterilecek bir şey yok | `EmptyState` | Gri bir "Veri yok" yazısı |
-| Liste veya bölüm yüklenemedi | `RecordTable error` + `onRetry`, bölümde `EmptyState status="danger"` + `onRetry` | Boş tablo, kırmızı düz metin |
-| Kalıcı geri bildirim | `status` ile `Banner` | Renkli `<div>`'ler, emoji, alert() |
-| Geçici geri bildirim | `sonner` paketinden `toast`; kökte bir kez `@/components/ui/sonner` içinden `Toaster` | "Kaydedildi!" için banner |
-| Kaydedilmemiş form değişiklikleri | `UnsavedBar` | Uzun formun en altında Kaydet butonu |
-| Durum | `status` ile `Badge` (canlı durumlar için + `dot`) | Özel renkli hap etiketler |
-| Aksiyonlar | `variant` + `color` ile `Button` | Özel `<button>` stilleri, ekstra gölgeler |
-| Önemli sayılar | `StatCard` | Gradient metinli dev hero sayıları |
-| Anahtar/değer detayları | `DescriptionList` | Elle hizalanmış flex satırları |
-| Tek bir açma/kapama ayarı | `SettingRow` | Rastgele bir flex içinde label + switch |
-| Aç/kapa özellik + ayarları | `ToggleSection` | Switch'in yanında hep görünen ayar formu |
-| İlk kurulum adımları | `Launchpad` (adım başına `eta`, sıra gerekiyorsa `requires`) | Ekranda dağınık "önce şunu yapın" banner'ları |
-| Storefront script kur/güncelle/kaldır | `ScriptInstaller` | Elle yazılmış kur butonu, onaysız kaldırma |
-| Grafik çerçevesi (başlık, değer, aralık) | `ChartCard` | Her grafik için özel kart başlığı |
+| Screen wrapper + title + actions | `Page` + `PageHeader` from `@/components/ikas/page` | A custom `<div className="container">` with an `<h1>` |
+| Columns | `Layout` / `LayoutColumn` (`columns="main-aside"`, `"half"`, `"third"`) | Hand-written `grid-cols-*` on every page |
+| Settings forms | `SettingsGroup` (`label`, `hint`, `index` on long pages) + `Card` + `Field` | One huge form in a single centered card |
+| Record list | `RecordTable` | A grid of cards for tabular data |
+| Nothing to show | `EmptyState` | A grey "No data" line |
+| A list or section failed to load | `RecordTable error` + `onRetry`; in a section, `EmptyState status="danger"` + `onRetry` | An empty table, plain red text |
+| Persistent feedback | `Banner` with `status` | Colored `<div>`s, emoji, alert() |
+| Transient feedback | `toast` from the `sonner` package; `Toaster` from `@/components/ui/sonner` once at the root | A banner for "Saved!" |
+| Unsaved form changes | `UnsavedBar` | A Save button at the bottom of a long form |
+| Status | `Badge` with `status` (+ `dot` for live states) | Custom colored pill labels |
+| Actions | `Button` with `variant` + `color` | Custom `<button>` styles, extra shadows |
+| Key numbers | `StatCard` | Huge hero numbers with gradient text |
+| Key/value details | `DescriptionList` | Hand-aligned flex rows |
+| A single on/off setting | `SettingRow` | A label + switch in an ad-hoc flex |
+| Toggleable feature + its settings | `ToggleSection` | A settings form always visible next to the switch |
+| Onboarding steps | `Launchpad` (`eta` per step, `requires` when order matters) | "Do this first" banners scattered across the screen |
+| Install/update/remove a storefront script | `ScriptInstaller` | A hand-written install button, removal without confirmation |
+| Chart frame (title, value, range) | `ChartCard` | A custom card header for each chart |
 
-Kendin yazmadan önce eksik olanı `npx shadcn@latest add @ikas/<name>` ile kur.
+Before writing your own, install the missing piece with `npx shadcn@latest add @ikas/<name>`.
 
-## 2. Görsel kurallar
+## 2. Visual rules
 
-- **Renkler yalnızca token'lardan gelir.** `bg-card`, `text-muted-foreground`,
-  `bg-success-subtle`, `border-border` vb. kullan. Uygulama kodunda asla hex değer, `bg-blue-500`,
-  `text-gray-600` veya herhangi bir ham Tailwind palet rengi yazma.
-- **Derinlik bileşenlerden gelir.** Solid butonlar içe dönük bir parlama ve yumuşak bir glow ile;
-  kartlar ve outline butonlar katmanlı ince gölgelerle gelir. Asla kendi gradient'ini, glow'unu,
-  `shadow-lg`/`shadow-2xl`, gradient metin veya renkli arka plan ekleme.
-- **Süs amaçlı emoji yok:** başlıklarda, butonlarda, rozetlerde veya boş durumlarda. lucide ikonlarını kullan.
-- **Her ekran bölümünde tek solid buton.** Diğer aksiyonlar `outline`, `soft` veya `ghost` olur.
-  Solid buton aksiyon grubunun en son öğesidir.
-- **Varsayılan nötr.** Renk bir anlam taşımıyorsa butonlar `color="neutral"` olur:
-  geri alınamaz onaylar için `red`, uygulamanın ana çağrısı için tek bir vurgu rengi (ör. `blue`).
-  Aynı ekranda birden fazla vurgu rengini asla karıştırma.
-- **Durum renklerinin anlamı var.** `status` değerleri: `success` = tamamlandı/sağlıklı,
-  `warning` = yakında ilgi istiyor, `danger` = bozuk/engellendi/geri alınamaz, `info` = bilgi,
-  `neutral` = durum yok. Bunları süs için kullanma.
-- **Toast'ı renklendirme, durum verir.** `toast.success/info/warning/error` yeterli: ikon (warning ve error'da ince
-  bir kenar) durumu taşır. Daha belirgin toast'lar için tek yerde `<Toaster variant="soft" />`; toast başına
-  `className` ile renk verme.
-- **Banner aksiyonlarına renk verme, banner verir.** `Banner` `actions` içindeki butonlara `color` verme:
-  soft banner'da varsayılan renkli butonlar durumun rengini kendiliğinden alır (solid → durum dolgusu,
-  outline/soft/ghost → tonlu). Metne veya butonlara elle `text-amber-*`, `bg-red-*` gibi sınıf ekleme.
-- **Yüzeyler:** önce açık tema. Sayfa arka planı `bg-background`; içerik `Card` üzerinde durur
-  (beyaz, katmanlı ince gölge). `backdrop-blur`, glassmorphism veya renkli kart arka planı yok.
-- **Köşe yarıçapı:** bileşenlerin varsayılanlarını kullan. `rounded-2xl`/`rounded-3xl` ekleme.
-- **Tipografi:** sayfa başlığını `PageHeader` belirler (20px semibold). Kart başlıkları 15px semibold.
-  Gövde 14px. Uygulamanın hiçbir yerinde `text-4xl`+ kullanma; TAMAMI BÜYÜK HARF etiket ve `tracking-widest` yok.
-- **Yoğunluk:** bu bir panel aracı. Kontroller 36px (`h-9`). Boşlukları şişirme
-  (`p-10`, `py-24`) ve landing page tarzı hero bölümleri oluşturma.
-- **İkonlar:** lucide-react; kontrollerde 16px, diğer yerlerde en fazla 20px. İkonlar metni destekler,
-  ana aksiyonda asla etiketin yerini almaz.
+- **Colors come only from tokens.** Use `bg-card`, `text-muted-foreground`,
+  `bg-success-subtle`, `border-border` and so on. Never write hex values, `bg-blue-500`,
+  `text-gray-600` or any raw Tailwind palette color in app code.
+- **Depth comes from the components.** Solid buttons ship with an inner highlight and a soft glow;
+  cards and outline buttons ship with layered thin shadows. Never add your own gradients, glows,
+  `shadow-lg`/`shadow-2xl`, gradient text or colored backgrounds.
+- **No decorative emoji:** not in headings, buttons, badges or empty states. Use lucide icons.
+- **One solid button per screen section.** Other actions are `outline`, `soft` or `ghost`.
+  The solid button is the last item in the action group.
+- **Neutral by default.** Buttons are `color="neutral"` unless the color carries meaning:
+  `red` for irreversible confirmations, a single accent color (e.g. `blue`) for the app's main call to action.
+  Never mix more than one accent color on the same screen.
+- **Status colors have meaning.** `status` values: `success` = done/healthy,
+  `warning` = needs attention soon, `danger` = broken/blocked/irreversible, `info` = informational,
+  `neutral` = no status. Don't use them for decoration.
+- **Don't color toasts; the status does.** `toast.success/info/warning/error` is enough: the icon (plus a thin
+  border on warning and error) carries the status. For more prominent toasts, use `<Toaster variant="soft" />` in one place; never
+  color individual toasts with `className`.
+- **Don't color banner actions; the banner does.** Don't give `color` to buttons in `Banner` `actions`:
+  in a soft banner, default-colored buttons take the status color on their own (solid → status fill,
+  outline/soft/ghost → tinted). Don't add classes like `text-amber-*` or `bg-red-*` to the text or buttons by hand.
+- **Surfaces:** light theme first. Page background is `bg-background`; content sits on a `Card`
+  (white, layered thin shadow). No `backdrop-blur`, glassmorphism or colored card backgrounds.
+- **Corner radius:** use the component defaults. Don't add `rounded-2xl`/`rounded-3xl`.
+- **Typography:** `PageHeader` sets the page title (20px semibold). Card titles are 15px semibold.
+  Body is 14px. Never use `text-4xl`+ anywhere in the app; no ALL CAPS labels and no `tracking-widest`.
+- **Density:** this is an admin tool. Controls are 36px (`h-9`). Don't inflate spacing
+  (`p-10`, `py-24`) and don't build landing-page-style hero sections.
+- **Icons:** lucide-react; 16px in controls, at most 20px elsewhere. Icons support text;
+  they never replace the label on the main action.
 
-## 3. Metin kuralları
+## 3. Copy rules
 
-- Her yerde yalnızca ilk harf büyük: "Kampanya oluştur", "Kampanya Oluştur" değil.
-- Buton metni neyin olacağını söyler: "Ayarları kaydet", "Siparişleri dışa aktar". Tek başına "Gönder",
-  "Tamam", "Buraya tıkla" yazma.
-- Boş durum ekranda neden bir şey olmadığını söyler ve tek bir sonraki adım sunar. Şaka yok, "Hay aksi!" yok.
-- Hata metni önce sonucu (ne kaydedilmedi, ne gönderilmedi), sonra çözümü verir. Mağaza sahiplerine
-  ham hata nesnesi veya stack trace gösterme; hata kodu gerekiyorsa mono yazıyla ekle.
-- Mağaza sahipleri için uygulamanın dilinde yaz (Türkçe uygulamalar: Türkçe metin; sayı ve para
-  birimi için `Intl.NumberFormat` ile `tr-TR` biçimlendirmesi).
+- Sentence case everywhere: "Create campaign", not "Create Campaign".
+- Button copy says what will happen: "Save settings", "Export orders". Never write a bare "Submit",
+  "OK" or "Click here".
+- An empty state says why there is nothing on the screen and offers a single next step. No jokes, no "Oops!".
+- Error copy gives the consequence first (what wasn't saved, what wasn't sent), then the fix. Never show
+  merchants a raw error object or stack trace; if an error code is needed, add it in monospace.
+- Write for merchants in the app's language (Turkish apps: Turkish copy; format numbers and
+  currency with `Intl.NumberFormat` and `tr-TR`).
 
-## 4. Durumlar isteğe bağlı değil
+## 4. States are not optional
 
-Veriye dayalı her ekran şunları karşılar: **yükleniyor** (sayfanın ortasında spinner değil,
-`RecordTable loading` veya `Skeleton` ile iskeletler), **boş** (`EmptyState`), **hata**
-(bölüm 1'deki gibi yerinde; sayfanın geri kalanı çalışıyorsa tekrar dene aksiyonlu `Banner status="danger"`)
-ve **başarı** (`toast`).
+Every data-driven screen covers: **loading** (skeletons with `RecordTable loading` or `Skeleton`,
+not a spinner in the middle of the page), **empty** (`EmptyState`), **error**
+(in place, as in section 1; `Banner status="danger"` with a retry action if the rest of the page works)
+and **success** (`toast`).
 
-## 5. Sayfa tarifleri
+## 5. Page recipes
 
-- **Liste sayfası:** `Page width="wide"` → `PageHeader` (başlık, ana aksiyon) →
-  araç çubuklu (arama + filtreler), sayfalamalı ve toplu işlemli `RecordTable`.
-- **Detay sayfası:** `Page` → `PageHeader` (`back`, `badges`, aksiyonlar) →
-  `Layout columns="main-aside"` → ana sütun: içerik kartları; yan sütun: `DescriptionList` kartları.
-- **Ayarlar sayfası:** `Page width="narrow"` → `PageHeader` → her biri tek `Card` içeren alt alta
-  `SettingsGroup`'lar → formun değişiklik durumuna bağlı `UnsavedBar`. Dörtten fazla grup varsa
-  `Page` + solda yapışkan bölüm menüsü ve gruplarda `index="01"` gibi numaralar.
-- **Uygulama ana sayfası (ilk kurulum):** `Page width="wide"` → `PageHeader` → en üstte `Launchpad`
-  → metrikler ve ilk kayıt için `EmptyState`. Tüm adımlar bitince `onDismiss` ile kaldırılabilir.
-- **Panel:** `Page width="wide"` → `StatCard`'lardan oluşan `Layout columns="third"` → tablolar / kartlar.
+- **List page:** `Page width="wide"` → `PageHeader` (title, main action) →
+  `RecordTable` with a toolbar (search + filters), pagination and bulk actions.
+- **Detail page:** `Page` → `PageHeader` (`back`, `badges`, actions) →
+  `Layout columns="main-aside"` → main column: content cards; side column: `DescriptionList` cards.
+- **Settings page:** `Page width="narrow"` → `PageHeader` → stacked `SettingsGroup`s, each holding
+  a single `Card` → `UnsavedBar` bound to the form's dirty state. With more than four groups,
+  `Page` + a sticky section menu on the left and numbers like `index="01"` on the groups.
+- **App home (onboarding):** `Page width="wide"` → `PageHeader` → `Launchpad` at the top
+  → metrics and an `EmptyState` for the first record. Once every step is done it can be removed with `onDismiss`.
+- **Dashboard:** `Page width="wide"` → `Layout columns="third"` of `StatCard`s → tables / cards.
 
-## 6. Hareket
+## 6. Motion
 
-- Spring ve eğrileri elle yazmayın: `@/lib/motion` (`SPRING`, `ICON_SPRING`, `EASE_*`, `springOrInstant`)
-  veya CSS'te `ease-(--ease-out)` gibi token'ları kullanın.
-- Hover 150ms, içerik belirmesi 150ms / sönmesi 100ms, overlay 300/200ms. Çıkış girişten kısa olur.
-- `transition-all` yasak. Tailwind v4'te `translate-*` / `scale-*` için geçiş listesine
-  `translate` ve `scale` yazın (`transform` değil).
-- İkon mikro animasyonu için ikona `data-anim="spin|nudge|lift|drop|ring|wiggle|bounce|pop"` verin;
-  kendi keyframe'inizi yazmayın.
-- Sekme / tekli seçim için `SegmentedControl`, sayı girişi için `NumberStepper`, açılır bölüm için
-  `Collapse`, satır içi yıkıcı onay için `ConfirmButton` kullanın.
-- Her animasyonun reduced-motion karşılığı olmalı (`springOrInstant(useReducedMotion())`, `motion-reduce:*`).
+- Don't hand-write springs or curves: use `@/lib/motion` (`SPRING`, `ICON_SPRING`, `EASE_*`, `springOrInstant`)
+  or tokens like `ease-(--ease-out)` in CSS.
+- Hover 150ms, content enter 150ms / exit 100ms, overlay 300/200ms. Exit is shorter than enter.
+- `transition-all` is banned. In Tailwind v4, for `translate-*` / `scale-*` list
+  `translate` and `scale` in the transition property (not `transform`).
+- For icon micro-animations, give the icon `data-anim="spin|nudge|lift|drop|ring|wiggle|bounce|pop"`;
+  don't write your own keyframes.
+- Use `SegmentedControl` for tabs / single choice, `NumberStepper` for number input,
+  `Collapse` for expandable sections, `ConfirmButton` for inline destructive confirmation.
+- Every animation needs a reduced-motion fallback (`springOrInstant(useReducedMotion())`, `motion-reduce:*`).
 
-## 7. Grafikler
+## 7. Charts
 
-- Grafikleri `AreaChart`, `BarChart`, `DonutChart`, `BarList`, `Sparkline`, `Meter` ile kurun.
-- Tek seri `--chart-ink`, birden çok seri `--chart-1…6` sırasıyla. Renkleri elle seçmeyin, döngüye sokmayın;
-  6'dan fazla seri "Diğer" altında toplanır. Durum renkleri seri rengi değildir.
-- Tek y ekseni. İki farklı ölçekli ölçü için iki grafik.
-- İnce işaretler: 2px çizgi, ≤ 24px bar, 4px yuvarlak uç, ince yatay grid. Değer ve etiketler metin token'larında.
-- 2+ seride legend zorunlu. Her noktaya sayı yazmayın; tooltip ve gerektiğinde tablo görünümü verin.
-- Tek bir öne çıkan sayı gerekiyorsa grafik değil `StatCard` kullanın.
-
+- Build charts with `AreaChart`, `BarChart`, `DonutChart`, `BarList`, `Sparkline`, `Meter`.
+- A single series uses `--chart-ink`; multiple series use `--chart-1…6` in order. Don't pick colors by hand or cycle them;
+  more than 6 series are grouped under "Other". Status colors are not series colors.
+- One y-axis. Two measures on different scales get two charts.
+- Thin marks: 2px lines, ≤ 24px bars, 4px rounded ends, thin horizontal grid. Values and labels use text tokens.
+- A legend is required for 2+ series. Don't label every point; provide a tooltip and, when needed, a table view.
+- If you need a single headline number, use a `StatCard`, not a chart.

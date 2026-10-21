@@ -52,29 +52,3 @@ Thumbs.db
 prisma/*.db
 
 .ikas
-
-# START Ruler Generated Files
-*.bak
-.aider.conf.yml
-.augment
-.clinerules
-.crush.json
-.codex
-.gemini
-.github
-.goosehints
-.idx
-.junie
-.kilocode
-.kiro
-.openhands
-.qwen
-.roo
-.vscode
-.windsurf
-.zed
-CRUSH.md
-WARP.md
-config.toml
-opencode.json
-# END Ruler Generated Files

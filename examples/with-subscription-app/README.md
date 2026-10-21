@@ -131,7 +131,7 @@ Port and redirect path are also defined in `ikas.config.json`:
 - `pnpm prisma:migrate` — create/apply migrations
 - `pnpm prisma:generate` — regenerate Prisma client
 - `pnpm prisma:studio` — open Prisma Studio
-- `pnpm apply:ai-rules` — apply Ruler agent configs
+- `pnpm ui:check` / `pnpm ui:sync` — compare the installed @ikas registry files with builders.ikas.com and refresh outdated ones
 
 ## 🔐 OAuth Flow
 

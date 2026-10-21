@@ -13,7 +13,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "apply:ai-rules": "npx @intellectronica/ruler apply"
+    "ui:check": "node scripts/ikas-ui.mjs check",
+    "ui:sync": "node scripts/ikas-ui.mjs sync"
   },
   "packageManager": "pnpm@10.34.7",
   "dependencies": {
