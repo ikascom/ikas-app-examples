@@ -1,13 +1,17 @@
 import React from 'react';
-import { CheckCircle2, Crown } from 'lucide-react';
+import { LockIcon } from 'lucide-react';
 import { MerchantAppSubscription } from '@/types/subscription';
 import { SubscriptionPeriodEnum } from '@/lib/ikas-client/generated/graphql';
+import { Page, PageHeader } from '@/components/ikas/page';
+import { EmptyState } from '@/components/ikas/empty-state';
+import { DescriptionList } from '@/components/ikas/description-list';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const PERIOD_LABELS: Record<SubscriptionPeriodEnum, string> = {
-  [SubscriptionPeriodEnum.MONTHLY]: 'monthly',
-  [SubscriptionPeriodEnum.YEARLY]: 'annual',
-  [SubscriptionPeriodEnum.ONE_TIME]: 'one-time',
+  [SubscriptionPeriodEnum.MONTHLY]: 'aylık',
+  [SubscriptionPeriodEnum.YEARLY]: 'yıllık',
+  [SubscriptionPeriodEnum.ONE_TIME]: 'tek seferlik',
 };
 
 interface HomePageProps {
@@ -16,75 +20,66 @@ interface HomePageProps {
   activeSubscription?: MerchantAppSubscription | null;
 }
 
+function formatPrice(subscription: MerchantAppSubscription) {
+  if (!subscription.currencyCode) return String(subscription.lastPaymentPrice);
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: subscription.currencyCode }).format(subscription.lastPaymentPrice);
+}
+
 /**
  * HomePage component - displays dashboard for authenticated users with active subscriptions
  */
 const HomePage: React.FC<HomePageProps> = ({ token, storeName, activeSubscription }) => {
   if (!token) {
     return (
-      <div className="max-w-[1200px] mx-auto p-6 bg-background min-h-[100vh]">
-        <div className="text-center p-20 bg-muted rounded-xl border border-dashed">
-          <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
-          <p className="text-muted-foreground">Please authenticate to access the dashboard.</p>
-        </div>
-      </div>
+      <Page>
+        <EmptyState
+          size="page"
+          media={<LockIcon />}
+          title="Oturum bulunamadı"
+          description="Bu ekranı görmek için uygulamayı ikas panelinden açın."
+        />
+      </Page>
     );
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto p-6 bg-background min-h-[100vh]">
-      {/* Success Header */}
-      <div className="text-center mb-8">
-        <CheckCircle2 className="mx-auto text-green-600" size={56} />
-        <h2 className="mt-4 text-2xl font-semibold tracking-tight">Welcome to Your Dashboard!</h2>
-        <p className="mt-2 text-muted-foreground">
-          You are authenticated to <span className="font-medium">{storeName}</span>
-        </p>
-      </div>
+    <Page>
+      <PageHeader
+        title="Genel bakış"
+        description={storeName ? `${storeName} mağazasına bağlısınız.` : 'Mağazanıza bağlısınız.'}
+      />
 
-      {/* Subscription Info Card */}
       {activeSubscription && (
-        <Card className="max-w-md mx-auto">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-500" />
-              Active Subscription
-            </CardTitle>
-            <CardDescription>Your current plan details</CardDescription>
+            <CardTitle>Aktif abonelik</CardTitle>
+            <CardDescription>Mevcut planınızın ayrıntıları</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Plan:</span>
-                <span className="font-medium">{activeSubscription.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status:</span>
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Active
-                </span>
-              </div>
-              {activeSubscription.lastPaymentDate && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Payment:</span>
-                  <span className="font-medium">
-                    {new Date(activeSubscription.lastPaymentDate).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Price:</span>
-                <span className="font-medium">
-                  {activeSubscription.lastPaymentPrice}{' '}
-                  {activeSubscription.currencyCode ?? ''} /{' '}
-                  {PERIOD_LABELS[activeSubscription.lastPaymentPeriod]}
-                </span>
-              </div>
-            </div>
+            <DescriptionList
+              items={[
+                { label: 'Plan', value: activeSubscription.name },
+                {
+                  label: 'Durum',
+                  value: (
+                    <Badge status="success" dot>
+                      Aktif
+                    </Badge>
+                  ),
+                },
+                ...(activeSubscription.lastPaymentDate
+                  ? [{ label: 'Son ödeme', value: new Date(activeSubscription.lastPaymentDate).toLocaleDateString('tr-TR') }]
+                  : []),
+                {
+                  label: 'Ücret',
+                  value: `${formatPrice(activeSubscription)} / ${PERIOD_LABELS[activeSubscription.lastPaymentPeriod]}`,
+                },
+              ]}
+            />
           </CardContent>
         </Card>
       )}
-    </div>
+    </Page>
   );
 };
 

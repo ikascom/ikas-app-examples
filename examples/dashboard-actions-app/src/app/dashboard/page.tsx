@@ -23,26 +23,23 @@ export default function DashboardPage() {
     }
   }, []);
 
-  /**
-   * Initializes the dashboard by fetching the token and store name.
-   */
-  const initializeDashboard = useCallback(async () => {
-    try {
-      const fetchedToken = await TokenHelpers.getTokenForIframeApp();
-      setToken(fetchedToken || null);
-
-      if (fetchedToken) {
-        await fetchStoreName(fetchedToken);
-      }
-    } catch (error) {
-      console.error('Error initializing dashboard:', error);
-    }
-  }, [fetchStoreName]);
-
-  // Run initialization on mount
   useEffect(() => {
-    initializeDashboard();
-  }, [initializeDashboard]);
+    let cancelled = false;
+
+    TokenHelpers.getTokenForIframeApp()
+      .then(async (fetchedToken) => {
+        if (cancelled) return;
+        setToken(fetchedToken || null);
+        if (fetchedToken) {
+          await fetchStoreName(fetchedToken);
+        }
+      })
+      .catch((error) => console.error('Error initializing dashboard:', error));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchStoreName]);
 
   // HomePage
   return <HomePage token={token} storeName={storeName} />;

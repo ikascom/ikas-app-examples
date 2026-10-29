@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Validation helper functions
-export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
+export function validateRequest<T>(schema: z.ZodType<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
   const result = schema.safeParse(data);
 
   if (result.success) {
@@ -10,6 +10,6 @@ export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { suc
 
   return {
     success: false,
-    error: result.error.errors.map((e) => e.message).join(', '),
+    error: result.error.issues.map((e) => e.message).join(', '),
   };
 }

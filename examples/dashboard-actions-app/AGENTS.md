@@ -6,12 +6,13 @@
 - Treat API tokens and secrets as sensitive; never log them.
 
 ## Stack Overview
-- Next.js 15 App Router, React 19, TypeScript, Tailwind + shadcn/ui.
+- Next.js 16 App Router (Turbopack), React 19, TypeScript, Tailwind CSS v4 + ikas App UI (shadcn registry `@ikas`).
+- Prisma 7 (`prisma-client` generator, output in `src/generated/prisma`, SQLite via `@prisma/adapter-better-sqlite3`).
 - ikas Admin GraphQL via `@ikas/admin-api-client` with codegen.
 - Session via `iron-session`.
 
 ## MCP Usage
-- When generating new UI components, use the "shadcn" MCP to fetch component boilerplates and demos. Align with existing `src/components/ui/*` structure.
+- When generating new UI, use the "shadcn" MCP against the `@ikas` registry (see "UI (ikas App UI)" below). Do not pull plain shadcn components when an `@ikas` one exists.
 - When generating or exploring ikas GraphQL operations, use the "ikas" MCP list and introspect tools to discover available queries/mutations and their shapes before implementation.
   - For ikas GraphQL specifically, follow this order before any implementation:
     1) Use the "ikas" MCP list tool to find the correct query/mutation name.
@@ -42,6 +43,68 @@
 - Do not call ikas APIs from the browser; always go through server routes.
 - Keep UI logic in components under `src/components/*`; avoid business logic in pages.
 
+## UI (ikas App UI)
+The app is rendered inside the ikas admin panel and must look like part of it. UI is built from the ikas App UI kit,
+a shadcn registry registered in `components.json` as `@ikas` (`https://builders.ikas.com/r/{name}.json`).
+
+### Discover components dynamically (do not guess)
+1. Once per session, before the first UI change, run `pnpm ui:check`. If it lists outdated files, run `pnpm ui:sync` (reinstalls them from the registry) and continue. If the registry is unreachable, continue with the local files.
+2. Read `ikas-ui.md` (project root) before writing or changing any UI. It maps every need to a component and holds the visual, text and state rules.
+3. Look up what exists: shadcn MCP (`search_items_in_registries` / `view_items_in_registries` on `@ikas`) or `https://builders.ikas.com/r/registry.json`.
+   Each item's docs live under `https://builders.ikas.com/docs/app-development/ui-kit/components/<name>`.
+4. Build screens from `@/components/ikas/*` (screen patterns) and `@/components/ui/*` (primitives).
+5. If a component is missing, install it with `npx shadcn@latest add @ikas/<name>`. Never hand-write a component the registry already has.
+6. Do not edit `ikas-ui.md` or files installed from the registry; `pnpm ui:sync` and `shadcn add` overwrite them. Project-specific rules go in this file.
+
+### Rule 1: the ikas panel owns the app header
+The panel draws a fixed header above the iframe: back button, app icon, app name and the plan button ("Planı Yönet").
+Developers cannot change it.
+- NEVER render the app logo, app icon or app name again inside the iframe (no "logo + app name" row, no brand bar).
+  Repeating it stacks two brand rows on top of each other.
+- The first row of an app screen is navigation or the screen's own `PageHeader` (screen title such as "Şablonlar", not the app name).
+- A top navigation row holds the section tabs on the left and, optionally, small status such as a plan `Badge` on the right.
+- Plan or billing actions belong to the panel's "Planı Yönet" button; do not add another "upgrade" button to the header row.
+
+```tsx
+// Wrong: duplicates the panel header
+<header><img src="/logo.png" /> LabelKit <Tabs>...</Tabs></header>
+
+// Right: tabs first, no brand
+<Tabs defaultValue="templates">
+  <div className="flex items-center justify-between">
+    <TabsList>{/* Şablonlar, Editör, Yazıcı ... */}</TabsList>
+    <Badge status="success" dot>Pro</Badge>
+  </div>
+  <TabsContent value="templates">...</TabsContent>
+</Tabs>
+```
+
+### Rule 2: solid outside, outline inside (nested tabs)
+Two nested tab rows must never share a style; the user has to see which level they are on.
+- Level 1, page navigation: solid tabs, `<TabsList>` (default variant, filled track with a raised active pill).
+- Level 2, sub views inside a section: outline tabs, `<TabsList variant="line">` (underline, no fill).
+- Inside a card header or toolbar: `SegmentedControl size="sm"` (or `mode="radio"` when it picks a value instead of a view).
+- Never nest more than two tab levels; use a `Select`, a side menu or a separate page instead.
+- Never put solid tabs inside solid tabs, or line tabs inside line tabs.
+- Same idea as buttons: one solid action per section, everything else `outline` / `soft` / `ghost`.
+
+```tsx
+<Tabs defaultValue="editor">
+  <TabsList>                          {/* level 1: solid */}
+    <TabsTrigger value="editor">Editör</TabsTrigger>
+    <TabsTrigger value="printer">Yazıcı</TabsTrigger>
+  </TabsList>
+  <TabsContent value="editor">
+    <Tabs defaultValue="layout">
+      <TabsList variant="line">        {/* level 2: outline */}
+        <TabsTrigger value="layout">Yerleşim</TabsTrigger>
+        <TabsTrigger value="fields">Alanlar</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  </TabsContent>
+</Tabs>
+```
+
 ## Iframe Pages and Authentication Pattern
 When building pages that will be loaded in iframes within the ikas dashboard (e.g., app actions, dashboard widgets):
 
@@ -70,21 +133,21 @@ function MyIframePage() {
     setLoading(false);
   }, []);
 
-  const initializePage = useCallback(async () => {
-    const token = await TokenHelpers.getTokenForIframeApp();
-    if (token) {
-      await fetchData(token);
-    }
-  }, [fetchData]);
-
   // Close the loader shown by ikas platform when opening the iframe
   useEffect(() => {
     AppBridgeHelper.closeLoader();
   }, []);
 
+  // Set state only from promise callbacks (react-hooks/set-state-in-effect)
   useEffect(() => {
-    initializePage();
-  }, [initializePage]);
+    let cancelled = false;
+    TokenHelpers.getTokenForIframeApp().then(async (token) => {
+      if (!cancelled && token) await fetchData(token);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchData]);
 
   // ... render UI
 }
@@ -127,7 +190,7 @@ export async function GET(request: NextRequest) {
 ### Important Rules
 - **ALWAYS** call `AppBridgeHelper.closeLoader()` in a `useEffect(() => { AppBridgeHelper.closeLoader(); }, [])` when the iframe page mounts to close the platform loading indicator.
 - **NEVER** bypass the token flow by hardcoding tokens or using environment variables for user authentication.
-- **ALWAYS** wrap `useSearchParams()` usage in a `<Suspense>` boundary (Next.js 15 requirement).
+- **ALWAYS** wrap `useSearchParams()` usage in a `<Suspense>` boundary (Next.js App Router requirement).
 - **ALWAYS** follow the established pattern: AppBridgeHelper.closeLoader() → TokenHelpers → ApiRequests → Backend API → ikas Client.
 - **ALWAYS** handle loading and error states gracefully in iframe pages.
 
@@ -136,18 +199,30 @@ export async function GET(request: NextRequest) {
 - TokenHelpers automatically caches tokens in sessionStorage with expiration validation.
 - JWT tokens contain `authorizedAppId` (aud) and `merchantId` (sub) for user identification.
 - **OAuth Callback Signature Validation**: The OAuth callback endpoint validates authorization codes using HMAC-SHA256 signatures.
-  - Use `TokenHelpers.validateCodeSignature(code, signature, clientSecret)` to verify code authenticity.
+  - Use `validateCodeSignature(code, signature, clientSecret)` from `src/helpers/signature-helpers.ts` (server-only, constant-time compare) to verify code authenticity.
+  - Never import server helpers (`signature-helpers`, `api-helpers`, Prisma) into client components; `TokenHelpers` is browser-only.
   - The callback route requires a `signature` query parameter and validates it before exchanging the code for tokens.
   - State parameter validation is optional but recommended for additional CSRF protection.
 
+## Dependency Security
+- Keep `next`, `react` and `react-dom` on the latest patch of a supported line. Next.js 15.3.0 / React 19.1.0 were affected by
+  CVE-2025-55182 / CVE-2025-66478 (unauthenticated RCE via Server Actions); an app built from the old template was compromised this way.
+- Run `pnpm audit --prod` before releasing and when bumping dependencies.
+
 ## Quality Gates
-- Run `pnpm codegen` when `graphql-requests.ts` changes.
+- Run `pnpm codegen` when `graphql-requests.ts` changes, and `pnpm prisma:generate` when `prisma/schema.prisma` changes.
+- `pnpm lint` (ESLint CLI; `next lint` no longer exists) and `pnpm build` must pass.
 - Ensure type-safety and linter cleanliness before committing.
 - Reject PRs that introduce raw GraphQL usage outside `graphql-requests.ts`.
 - Keep naming consistent with `ikas` brand and command patterns.
 
+## Skills
+- `.claude/skills/ikas-app-preflight` is the pre-review audit for the ikas App Store (OAuth, iframe, webhooks, actions, secrets). Run it before submitting the app for review, or when the user asks whether the app is ready.
+- It is a copy of the `ikas-app` plugin v0.3.9 from https://github.com/ikascom/ikas-app-skills. Do not edit it here; update it by copying a newer release.
+
 ## Notes
 - Prefer `ApiRequests` in `src/lib/api-requests.ts` to bridge frontend to backend endpoints.
+- App actions (API and IFRAME) are documented in `APP_ACTIONS_GUIDE.md` and `ACTION_ENDPOINT.md`. IFRAME action pages live in `src/app/ikas/actions/*`, follow the iframe pattern above and use `RecordTable` / `DescriptionList` for order data (helpers in `src/lib/order-format.ts`).
 
 ## Commit Message Rule
 Use **Conventional Commits** format:
@@ -161,3 +236,13 @@ Use **Conventional Commits** format:
 - feat(cart): add discount code validation  
 - fix(auth): prevent token refresh loop  
 - docs(readme): update installation guide  
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

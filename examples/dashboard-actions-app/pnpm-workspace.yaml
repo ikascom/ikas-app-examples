@@ -1,0 +1,8 @@
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - better-sqlite3
+  - prisma
+
+overrides:
+  lodash: ^4.18.0
+  mysql2: ^3.23.1

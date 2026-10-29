@@ -131,7 +131,7 @@ Port and redirect path are also defined in `ikas.config.json`:
 - `pnpm prisma:migrate` — create/apply migrations
 - `pnpm prisma:generate` — regenerate Prisma client
 - `pnpm prisma:studio` — open Prisma Studio
-- `pnpm apply:ai-rules` — apply Ruler agent configs
+- `pnpm ui:check` / `pnpm ui:sync` — compare the installed @ikas registry files with builders.ikas.com and refresh outdated ones
 
 ## 🔐 OAuth Flow
 
@@ -147,7 +147,7 @@ Port and redirect path are also defined in `ikas.config.json`:
 ### OAuth Callback Security
 The OAuth callback endpoint requires a `signature` query parameter to validate the authorization code:
 - **Signature Generation**: `HMAC-SHA256(code, clientSecret)` in hex format
-- **Validation**: `TokenHelpers.validateCodeSignature(code, signature, clientSecret)`
+- **Validation**: `validateCodeSignature(code, signature, clientSecret)` from `src/helpers/signature-helpers.ts` (server-only)
 - **State Parameter**: Optional but recommended for additional CSRF protection
 
 ## 🎯 App Actions

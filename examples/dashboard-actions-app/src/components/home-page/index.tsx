@@ -1,5 +1,8 @@
 import React from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { LockIcon, StoreIcon } from 'lucide-react';
+import { Page, PageHeader } from '@/components/ikas/page';
+import { EmptyState } from '@/components/ikas/empty-state';
+import { Banner } from '@/components/ikas/banner';
 
 // Props for HomePage component
 interface HomePageProps {
@@ -13,27 +16,29 @@ interface HomePageProps {
 const HomePage: React.FC<HomePageProps> = ({ token, storeName }) => {
   if (!token) {
     return (
-      <div className="max-w-[1200px] mx-auto p-6 bg-background min-h-[100vh]">
-        <div className="text-center p-20 bg-muted rounded-xl border border-dashed">
-          <h3 className="text-lg font-semibold mb-2">Authentication Required</h3>
-          <p className="text-muted-foreground">Please authenticate to use app actions.</p>
-        </div>
-      </div>
+      <Page>
+        <EmptyState
+          size="page"
+          media={<LockIcon />}
+          title="Oturum bulunamadı"
+          description="Bu ekranı görmek için uygulamayı ikas panelinden açın."
+        />
+      </Page>
     );
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto p-6 bg-background min-h-[100vh]">
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <CheckCircle2 className="mx-auto text-green-600" size={56} />
-          <h2 className="mt-4 text-2xl font-semibold tracking-tight">Congratulations!</h2>
-          <p className="mt-2 text-muted-foreground">
-            You are authenticated to <span className="font-medium">{storeName}</span><p>You can now go to the order list or detail page to see your app in action.</p>
-          </p>
-        </div>
-      </div>
-    </div>
+    <Page>
+      <PageHeader title="Genel bakış" description="Uygulamanız mağazanıza bağlandı." />
+      <Banner status="success" title="Bağlantı başarılı">
+        {storeName ? `${storeName} mağazası için yetkilendirme tamamlandı.` : 'Mağaza yetkilendirmesi tamamlandı.'}
+      </Banner>
+      <EmptyState
+        media={<StoreIcon />}
+        title="Aksiyonları sipariş ekranlarından deneyin"
+        description="Sipariş listesi veya sipariş detayı sayfasındaki uygulama aksiyonunu açarak uygulamanızı çalışırken görün."
+      />
+    </Page>
   );
 };
 

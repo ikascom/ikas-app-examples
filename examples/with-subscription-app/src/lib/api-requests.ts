@@ -3,7 +3,7 @@ import { GetMerchantApiResponse } from '../app/api/ikas/get-merchant/route';
 import { GetMerchantLicenceApiResponse } from '../app/api/ikas/get-merchant-licence/route';
 import { ApiResponseType } from '../globals/constants';
 
-export async function makePostRequest<T>({ url, data, token }: { url: string; data?: any; token?: string }) {
+export async function makePostRequest<T>({ url, data, token }: { url: string; data?: unknown; token?: string }) {
   return axios.post<ApiResponseType<T>>(url, data, {
     headers: token
       ? {
@@ -13,7 +13,7 @@ export async function makePostRequest<T>({ url, data, token }: { url: string; da
   });
 }
 
-export async function makeGetRequest<T>({ url, data, token }: { url: string; data?: any; token?: string }) {
+export async function makeGetRequest<T>({ url, data, token }: { url: string; data?: unknown; token?: string }) {
   return axios.get<ApiResponseType<T>>(url, {
     params: data,
     headers: token

@@ -269,7 +269,7 @@ https://your-app-domain.com/ikas/actions/order-detail?actionRunId=550e8400-e29b-
 
 #### Displayed Information
 
-The iframe page displays the following information in a card-based layout:
+The iframe page uses `Page` + `PageHeader`, a `Layout columns="main-aside"` with the line items in a `RecordTable`, and `DescriptionList` cards for summary and customer:
 
 **Order Header**
 - Order Number
@@ -307,7 +307,7 @@ The iframe implementation uses:
 
 #### User Experience
 
-- **Loading State**: Shows a loading spinner while fetching data
+- **Loading State**: Shows skeletons (detail) or the RecordTable loading state (list) while fetching data
 - **Error Handling**: Displays user-friendly error messages for:
   - Missing order ID
   - Order not found
@@ -470,9 +470,9 @@ https://your-app-domain.com/ikas/actions/order-list?actionRunId=550e8400-e29b-41
 
 #### Displayed Information
 
-The iframe page displays each order as a card with:
+The iframe page displays the orders in a `RecordTable` with one row per order:
 
-**Per Order Card:**
+**Per Order Row:**
 - Order Number
 - Order Date and Time
 - Order Status, Payment Status, Package Status
@@ -576,7 +576,8 @@ All translation keys are centrally managed in `/src/lib/i18n.ts`. Key naming con
 - `/src/app/api/ikas/get-order/route.ts` - API endpoint for fetching order data (used by iframe page)
 - `/src/lib/api-requests.ts` - Frontend-backend API bridge with `getOrder` method
 - `/src/helpers/token-helpers.ts` - App bridge token helpers
-- `/src/components/ui/card.tsx` - UI card component
+- `/src/components/ikas/*`, `/src/components/ui/*` - ikas App UI components (Page, RecordTable, DescriptionList, Badge, ...)
+- `/src/lib/order-format.ts` - Money, date and status badge helpers
 - `/src/components/Loading/index.tsx` - Loading spinner component
 - `/src/lib/auth-helpers.ts` - JWT token authentication helpers
 - `/src/lib/i18n.ts` - Internationalization helper with translations
@@ -594,7 +595,8 @@ All translation keys are centrally managed in `/src/lib/i18n.ts`. Key naming con
 - `/src/app/api/ikas/get-order/route.ts` - API endpoint for fetching order data (used by iframe page)
 - `/src/lib/api-requests.ts` - Frontend-backend API bridge with `getOrder` method
 - `/src/helpers/token-helpers.ts` - App bridge token helpers
-- `/src/components/ui/card.tsx` - UI card component
+- `/src/components/ikas/*`, `/src/components/ui/*` - ikas App UI components (Page, RecordTable, DescriptionList, Badge, ...)
+- `/src/lib/order-format.ts` - Money, date and status badge helpers
 - `/src/components/Loading/index.tsx` - Loading spinner component
 - `/src/lib/auth-helpers.ts` - JWT token authentication helpers
 - `/src/lib/i18n.ts` - Internationalization helper with translations

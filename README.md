@@ -2,18 +2,30 @@
 
 A collection of example applications and starter templates for building ikas Admin apps. These examples demonstrate best practices, common patterns, and integrations for developing apps within the ikas ecosystem.
 
+> [!CAUTION]
+> **Security notice: update apps created from older versions of these templates.**
+> Earlier versions pinned `next@15.3.0` with `react@^19.0.0` (19.1.0 in the lockfile). These versions are affected by
+> [CVE-2025-55182 / CVE-2025-66478](https://nextjs.org/cve-2025-66478), an unauthenticated remote code execution in
+> React Server Components (CVSS 10.0), plus [CVE-2025-55183 / CVE-2025-55184](https://nextjs.org/blog/security-update-2025-12-11).
+> An app built from this template has been compromised through this vulnerability.
+>
+> If your app was created from this repository:
+> 1. Upgrade `next`, `react` and `react-dom` to a patched release (these examples now use `next@16.4.1` and `react@19.3.1`) and redeploy.
+> 2. Rotate your app's `CLIENT_SECRET` and `SECRET_COOKIE_PASSWORD`, and treat stored OAuth tokens as exposed if the app was publicly reachable.
+> 3. Check your server for unexpected processes or outbound connections.
+
 ## 🚀 Available Examples
 
-### [Starter App](./examples/starter-app/) - Next.js 15 Full-Stack Template
+### [Starter App](./examples/starter-app/) - Next.js 16 Full-Stack Template
 
-**Modern Next.js 15 App Router starter for building ikas Admin apps**
+**Modern Next.js 16 App Router starter for building ikas Admin apps**
 
 **Features:**
-- ⚛️ **Next.js 15 + App Router** with React 19 and TypeScript
+- ⚛️ **Next.js 16 + App Router** with React 19 and TypeScript
 - 🔐 **OAuth for ikas** - Complete end-to-end authorization flow
 - 📡 **Admin GraphQL client** - `@ikas/admin-api-client` with code generation
-- 🗃️ **Prisma** - Local development database for token storage
-- 🎨 **Tailwind CSS v4 + shadcn/ui** - Modern component library
+- 🗃️ **Prisma 7** - Local SQLite database for token storage
+- 🎨 **Tailwind CSS v4 + ikas App UI** - The ikas panel's component kit, installed through the `@ikas` shadcn registry
 - 🔒 **Iron Session** - Secure server-side session management
 - 🌉 **Frontend ↔ Backend bridge** - Typed API helpers and authentication
 
@@ -51,7 +63,7 @@ A collection of example applications and starter templates for building ikas Adm
 
 ### Prerequisites
 
-- **Node.js** 18+ (LTS recommended)
+- **Node.js** 20.9+ (LTS recommended)
 - **pnpm** (preferred) or npm/yarn
 - **ikas Developer Account** with app credentials
 
@@ -83,7 +95,7 @@ These examples cover essential patterns for ikas app development:
 - **Session Handling** - Server-side session management
 - **Signature Validation** - HMAC-SHA256 webhook security for API actions
 - **App Bridge Integration** - Embedded iframe pages with secure token exchange
-- **UI Components** - Modern, accessible interfaces with Tailwind + shadcn/ui
+- **UI Components** - Panel-consistent interfaces with ikas App UI (Tailwind + shadcn registry)
 - **Database Integration** - Local development with Prisma
 - **Internationalization** - Multi-language support with centralized translation management
 - **Security Best Practices** - Token security, session management, and API protection
@@ -123,9 +135,9 @@ SECRET_COOKIE_PASSWORD=your_long_random_string_for_session_encryption
 4. Use typed client in your app
 
 ### UI Components
-1. Use shadcn MCP to discover components
-2. Install via CLI or copy from examples
-3. Customize with Tailwind classes
+1. Screens use [ikas App UI](https://builders.ikas.com/docs/app-development/ui-kit/installation), registered as `@ikas` in `components.json`
+2. Find components with the shadcn MCP or `https://builders.ikas.com/r/registry.json`, install with `npx shadcn@latest add @ikas/<name>`
+3. Follow `ikas-ui.md` and the UI section of each example's `AGENTS.md`
 
 ### Authentication Flow
 1. OAuth authorization → token exchange → session storage

@@ -64,36 +64,35 @@ export default function DashboardPage() {
     [router]
   );
 
-  /**
-   * Initializes the dashboard by fetching the token, checking subscription, and fetching store name.
-   */
-  const initializeDashboard = useCallback(async () => {
-    try {
-      const fetchedToken = await TokenHelpers.getTokenForIframeApp();
-      setToken(fetchedToken || null);
-
-      if (fetchedToken) {
-        const hasSubscription = await checkSubscription(fetchedToken);
-        if (hasSubscription) {
-          await fetchStoreName(fetchedToken);
-        }
-      }
-    } catch (error) {
-      console.error('Error initializing dashboard:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchStoreName, checkSubscription]);
-
   // Close loader on mount
   useEffect(() => {
     AppBridgeHelper.closeLoader();
   }, []);
 
-  // Run initialization on mount
   useEffect(() => {
-    initializeDashboard();
-  }, [initializeDashboard]);
+    let cancelled = false;
+
+    TokenHelpers.getTokenForIframeApp()
+      .then(async (fetchedToken) => {
+        if (cancelled) return;
+        setToken(fetchedToken || null);
+
+        if (fetchedToken) {
+          const hasSubscription = await checkSubscription(fetchedToken);
+          if (hasSubscription) {
+            await fetchStoreName(fetchedToken);
+          }
+        }
+      })
+      .catch((error) => console.error('Error initializing dashboard:', error))
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchStoreName, checkSubscription]);
 
   if (isLoading) {
     return <Loading />;

@@ -2,7 +2,7 @@
 
 import { AppBridgeHelper } from '@ikas/app-helpers';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { TokenHelpers } from '@/helpers/token-helpers';
 
@@ -15,11 +15,9 @@ import { TokenHelpers } from '@/helpers/token-helpers';
  * - Routing users to appropriate pages based on their authentication status
  * - Handling both internal (iFrame within ikas dashboard) and external (direct browser) access scenarios
  * 
- * @returns An object containing the loading state
  */
 export function useBaseHomePage() {
-  // Track loading state during authentication flow
-  const [isLoading, setIsLoading] = useState(false);
+  const startedRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -55,9 +53,6 @@ export function useBaseHomePage() {
         
         // Fallback to authorization page on any unexpected errors
         router.push('/authorize-store');
-      } finally {
-        // Always reset loading state when initialization completes
-        setIsLoading(false);
       }
     };
 
@@ -87,12 +82,11 @@ export function useBaseHomePage() {
     };
 
     // Prevent multiple simultaneous initialization attempts
-    if (isLoading) {
+    if (startedRef.current) {
       return;
     }
 
-    // Set loading state and begin initialization
-    setIsLoading(true);
+    startedRef.current = true;
     initializeAuthFlow();
 
     // No cleanup required - all operations are async and self-contained
@@ -101,7 +95,4 @@ export function useBaseHomePage() {
     // Dependencies intentionally minimal - only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Return loading state for consuming components
-  return { isLoading };
 }

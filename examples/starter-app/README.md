@@ -1,14 +1,17 @@
-# ikas App Starter (Next.js 15)
+# ikas App Starter (Next.js 16)
 
-Modern Next.js 15 App Router starter app for building ikas Admin apps with OAuth, Prisma, GraphQL (codegen), Tailwind + shadcn/ui, and secure server routes.
+Modern Next.js 16 App Router starter app for building ikas Admin apps with OAuth, Prisma, GraphQL (codegen), Tailwind + ikas App UI, and secure server routes.
+
+> [!CAUTION]
+> Apps created from versions of this template with `next@15.3.0` are vulnerable to [CVE-2025-55182 / CVE-2025-66478](https://nextjs.org/cve-2025-66478) (unauthenticated RCE). Upgrade `next`, `react` and `react-dom`, redeploy, and rotate `CLIENT_SECRET` and `SECRET_COOKIE_PASSWORD`.
 
 ## 🚀 Features
 
-- **Next.js 15 + App Router** with React 19 and TypeScript
+- **Next.js 16 + App Router** (Turbopack) with React 19 and TypeScript
 - **OAuth for ikas**: end-to-end flow (authorize → callback → session/JWT)
 - **Admin GraphQL client**: `@ikas/admin-api-client` with codegen
-- **Prisma**: local dev DB to store tokens (via `AuthTokenManager`)
-- **Tailwind CSS v4 + shadcn/ui** components
+- **Prisma 7**: local SQLite DB to store tokens (via `AuthTokenManager`)
+- **Tailwind CSS v4 + [ikas App UI](https://builders.ikas.com/docs/app-development/ui-kit/installation)** components from the `@ikas` shadcn registry
 - **Iron Session** server-side session management
 - **Frontend ↔ Backend bridge** via typed API helpers
 
@@ -31,7 +34,8 @@ src/
 │
 ├─ components/
 │  ├─ home-page/index.tsx                # Simple authenticated UI
-│  └─ ui/*                               # shadcn/ui components
+│  ├─ ikas/*                             # ikas App UI screen patterns (Page, Layout, EmptyState...)
+│  └─ ui/*                               # ikas App UI primitives (Button, Card, Tabs...)
 │
 ├─ globals/
 │  ├─ config.ts                          # Env + OAuth config
@@ -40,7 +44,10 @@ src/
 ├─ helpers/
 │  ├─ api-helpers.ts                     # getIkas(), onCheckToken(), getRedirectUri()
 │  ├─ jwt-helpers.ts                     # JWT create/verify
-│  └─ token-helpers.ts                   # Token utilities (AppBridge, signature validation)
+│  ├─ signature-helpers.ts               # OAuth code signature validation (server-only)
+│  └─ token-helpers.ts                   # Browser token utilities (AppBridge, sessionStorage)
+│
+├─ generated/prisma/                    # Generated Prisma Client (gitignored, `pnpm prisma:generate`)
 │
 ├─ lib/
 │  ├─ api-requests.ts                    # Frontend → backend bridge (axios)
@@ -80,7 +87,8 @@ Required envs (see `src/globals/config.ts`):
 - `NEXT_PUBLIC_CLIENT_ID` — your ikas app client id
 - `CLIENT_SECRET` — your ikas app client secret
 - `NEXT_PUBLIC_DEPLOY_URL` — public base URL of this app (e.g. `https://yourapp.example.com`)
-- `SECRET_COOKIE_PASSWORD` — long random string for iron-session
+- `SECRET_COOKIE_PASSWORD` — long random string for iron-session (at least 32 characters)
+- `DATABASE_URL` — optional, defaults to `file:./prisma/dev.db`
 
 3) Initialize Prisma (first run)
 
@@ -115,13 +123,13 @@ Port and redirect path are also defined in `ikas.config.json`:
 - `pnpm dev` — start Next.js in dev
 - `pnpm build` — build production
 - `pnpm start` — start production server
-- `pnpm lint` — run ESLint
+- `pnpm lint` — run ESLint (`eslint .`; `next lint` was removed in Next.js 16)
 - `pnpm codegen` — GraphQL Codegen using `src/lib/ikas-client/codegen.ts`
 - `pnpm prisma:init` — generate client and push schema to local DB
 - `pnpm prisma:migrate` — create/apply migrations
 - `pnpm prisma:generate` — regenerate Prisma client
 - `pnpm prisma:studio` — open Prisma Studio
-- `pnpm apply:ai-rules` — apply Ruler agent configs
+- `pnpm ui:check` / `pnpm ui:sync` — compare the installed @ikas registry files with builders.ikas.com and refresh outdated ones
 
 ## 🔐 OAuth Flow
 
@@ -172,7 +180,8 @@ MCP guidance (required before adding new ops):
 
 ## 🗃️ Database (Prisma)
 
-- Local SQLite DB located under `prisma/dev.db` with schema managed by `schema.prisma`.
+- Local SQLite DB located under `prisma/dev.db` (override with `DATABASE_URL`) with schema managed by `schema.prisma`.
+- Prisma 7 setup: CLI config in `prisma.config.ts`, client generated into `src/generated/prisma`, SQLite accessed through `@prisma/adapter-better-sqlite3` in `src/lib/prisma.ts`.
 - `AuthTokenManager` persists tokens (`models/auth-token/*`).
 - Use Prisma Studio to inspect tokens:
 
@@ -182,12 +191,15 @@ pnpm prisma:studio
 
 ## 🧩 UI and Styling
 
-- Tailwind v4 with CSS file at `src/app/globals.css`.
-- shadcn/ui components under `src/components/ui/*`.
+- Tailwind v4 with CSS file at `src/app/globals.css`; ikas tokens come from `npx shadcn@latest add @ikas/theme`.
+- ikas App UI components under `src/components/ikas/*` and `src/components/ui/*`, installed from the `@ikas` registry in `components.json`.
+- Add a component: `npx shadcn@latest add @ikas/<name>` (list: `https://builders.ikas.com/r/registry.json`).
+- Design rules for humans and AI agents: `ikas-ui.md` and the "UI (ikas App UI)" section of `AGENTS.md`.
+- The ikas panel already shows the app icon, name and plan button above the iframe; do not repeat them inside the app.
 
 ## 🧰 MCP Helpers
 
-- UI scaffolding: use shadcn MCP to fetch components/demos and place under `src/components/ui/*`.
+- UI scaffolding: the shadcn MCP sees the `@ikas` registry through `components.json`; search and install ikas components with it.
 - ikas GraphQL: use ikas MCP list + introspect before adding operations.
 
 ## 🔒 Security
@@ -195,7 +207,8 @@ pnpm prisma:studio
 - Never log secrets or tokens. Do not expose access/refresh tokens to the client.
 - Use the short-lived JWT for browser → server auth; server uses stored OAuth tokens.
 - `onCheckToken` auto-refreshes tokens server-side.
-- OAuth callback uses HMAC-SHA256 signature validation to verify authorization code authenticity before token exchange.
+- OAuth callback uses HMAC-SHA256 signature validation (constant-time compare) to verify authorization code authenticity before token exchange.
+- Keep `next`, `react` and `react-dom` patched and run `pnpm audit --prod` before releases.
 
 ## 📝 License
 

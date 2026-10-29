@@ -1,12 +1,13 @@
 import { AuthToken } from './index';
 import { prisma } from '@/lib/prisma';
+import type { AuthToken as AuthTokenRecord } from '@/generated/prisma/client';
 
 /**
  * AuthTokenManager provides methods to manage AuthTokens.
  * This implementation uses a local JSON file for storage (for development only).
  */
 export class AuthTokenManager {
-  private static toModel(db: any): AuthToken {
+  private static toModel(db: AuthTokenRecord): AuthToken {
     return {
       id: db.id,
       merchantId: db.merchantId,
